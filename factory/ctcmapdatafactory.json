@@ -1,0 +1,9 @@
+{
+	"name": "ctcmapdatafactory",
+	"location": "eastus",
+	"identity": {
+		"type": "SystemAssigned",
+		"principalId": "0d899f19-22a6-48ce-9245-9d270fe8954b",
+		"tenantId": "b41b72d0-4e9f-4c26-8a69-f949f367c91d"
+	}
+}

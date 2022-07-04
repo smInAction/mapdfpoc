@@ -1,0 +1,16 @@
+{
+	"name": "dfTargetDataSetCosmoDB",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "dfcosmolink",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "CosmosDbSqlApiCollection",
+		"schema": {},
+		"typeProperties": {
+			"collectionName": "dfcontainer"
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}
