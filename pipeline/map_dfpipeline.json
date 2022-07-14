@@ -52,26 +52,10 @@
 							},
 							{
 								"source": {
-									"path": "$['clientInfo']['lastName']"
+									"path": "$['clientInfo']"
 								},
 								"sink": {
-									"path": "$['clientInfo']['lastName']"
-								}
-							},
-							{
-								"source": {
-									"path": "$['clientInfo']['mobilePhone']"
-								},
-								"sink": {
-									"path": "$['clientInfo']['mobilePhone']"
-								}
-							},
-							{
-								"source": {
-									"path": "$['clientInfo']['email']"
-								},
-								"sink": {
-									"path": "$['clientInfo']['email']"
+									"path": "$['clientInfo']"
 								}
 							}
 						],

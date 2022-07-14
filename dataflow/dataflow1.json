@@ -1,0 +1,67 @@
+{
+	"name": "dataflow1",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "Json2",
+						"type": "DatasetReference"
+					},
+					"name": "blobsource"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "Targetcosmodataset",
+						"type": "DatasetReference"
+					},
+					"name": "cosmosink"
+				}
+			],
+			"transformations": [
+				{
+					"name": "mediacolumns"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          jobId as string,",
+				"          hybrisOrderId as string,",
+				"          clientInfo as (lastName as string, mobilePhone as string, email as string),",
+				"          pdfMedia as (linkToAttachment as string, catalog as string, uploadedDate as string, delete as string)[],",
+				"          imageMedia as (linkToAttachment as string, catalog as string, uploadedDate as string, delete as string)[],",
+				"          trackingDetails as (linkToAttachment as string, catalog as string, uploadedDate as string, delete as string)[],",
+				"          complaints as (date as string, reason as string, text as string)[]",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false,",
+				"     documentForm: 'arrayOfDocuments') ~> blobsource",
+				"blobsource derive({pdfMedia.linkToAttachment} = 'pdfmedia/' + pdfMedia.linkToAttachment,",
+				"          {imageMedia.linkToAttachment} = 'imagemedia/' + imageMedia.linkToAttachment,",
+				"          {trackingDetails.linkToAttachment} = 'trackingmedia/' + trackingDetails.linkToAttachment) ~> mediacolumns",
+				"mediacolumns sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          jobId as string,",
+				"          hybrisOrderId as string,",
+				"          clientInfo as (lastName as string, mobilePhone as string, email as string),",
+				"          pdfMedia as (linkToAttachment as string, catalog as string, uploadedDate as string, delete as string)[],",
+				"          imageMedia as (linkToAttachment as string, catalog as string, uploadedDate as string, delete as string)[],",
+				"          trackingDetails as (linkToAttachment as string, catalog as string, uploadedDate as string, delete as string)[],",
+				"          complaints as (date as string, reason as string, text as string)[]",
+				"     ),",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     format: 'document',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> cosmosink"
+			]
+		}
+	}
+}
