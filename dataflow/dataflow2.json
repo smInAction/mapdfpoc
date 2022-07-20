@@ -18,7 +18,11 @@
 						"referenceName": "sinkhoscosmodataset",
 						"type": "DatasetReference"
 					},
-					"name": "sink1"
+					"name": "sink1",
+					"rejectedDataLinkedService": {
+						"referenceName": "dflinkedsvc",
+						"type": "LinkedServiceReference"
+					}
 				}
 			],
 			"transformations": [],
