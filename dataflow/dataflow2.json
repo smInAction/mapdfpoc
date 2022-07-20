@@ -6,7 +6,7 @@
 			"sources": [
 				{
 					"dataset": {
-						"referenceName": "SrcDatasetQC",
+						"referenceName": "srcqcdatasetv2",
 						"type": "DatasetReference"
 					},
 					"name": "source1"
@@ -92,7 +92,7 @@
 				"          ClientSurveyLanguage as string,",
 				"          SurveyCompleted as string,",
 				"          comments as (JobId as string, UserName as string, UserType as string, Date as string, Note as string)[],",
-				"          Documents as string[]",
+				"          Documents as (JobId as string, Location as string)[]",
 				"     ),",
 				"     allowSchemaDrift: true,",
 				"     validateSchema: false,",
