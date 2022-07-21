@@ -33,7 +33,7 @@
 				}
 			},
 			{
-				"name": "qcpngfilter",
+				"name": "qcpdffilter",
 				"type": "Filter",
 				"dependsOn": [
 					{
@@ -50,17 +50,17 @@
 						"type": "Expression"
 					},
 					"condition": {
-						"value": "@endswith(item().name,'png')",
+						"value": "@endswith(item().name,'pdf')",
 						"type": "Expression"
 					}
 				}
 			},
 			{
-				"name": "ForEach1",
+				"name": "qcpdfforeach",
 				"type": "ForEach",
 				"dependsOn": [
 					{
-						"activity": "qcpngfilter",
+						"activity": "qcpdffilter",
 						"dependencyConditions": [
 							"Succeeded"
 						]
@@ -69,12 +69,12 @@
 				"userProperties": [],
 				"typeProperties": {
 					"items": {
-						"value": "@activity('qcpngfilter').output.Value",
+						"value": "@activity('qcpdffilter').output.Value",
 						"type": "Expression"
 					},
 					"activities": [
 						{
-							"name": "Copy data1",
+							"name": "qcpdfcopytohos",
 							"type": "Copy",
 							"dependsOn": [],
 							"policy": {
@@ -115,7 +115,7 @@
 							],
 							"outputs": [
 								{
-									"referenceName": "targethosbinarydataset",
+									"referenceName": "targethospdfdataset",
 									"type": "DatasetReference"
 								}
 							]

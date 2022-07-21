@@ -1,5 +1,5 @@
 {
-	"name": "map_dfpipeline",
+	"name": "qcpngcopypipeline",
 	"properties": {
 		"activities": [
 			{
@@ -24,6 +24,7 @@
 					],
 					"storeSettings": {
 						"type": "AzureBlobStorageReadSettings",
+						"recursive": true,
 						"enablePartitionDiscovery": false
 					},
 					"formatSettings": {
@@ -55,7 +56,7 @@
 				}
 			},
 			{
-				"name": "ForEach1",
+				"name": "qcpngforeach",
 				"type": "ForEach",
 				"dependsOn": [
 					{
