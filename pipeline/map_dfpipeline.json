@@ -79,11 +79,26 @@
 										"type": "BinaryReadSettings"
 									}
 								},
+								"sink": {
+									"type": "BinarySink",
+									"storeSettings": {
+										"type": "AzureBlobStorageWriteSettings"
+									}
+								},
 								"enableStaging": false
 							},
 							"inputs": [
 								{
 									"referenceName": "srcqcbinarydataset",
+									"type": "DatasetReference",
+									"parameters": {
+										"filename": "@item().Name"
+									}
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "targethosbinarydataset",
 									"type": "DatasetReference"
 								}
 							]
