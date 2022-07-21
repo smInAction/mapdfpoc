@@ -1,0 +1,17 @@
+{
+	"name": "QcbinaryDataset",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "BinaryLS",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "Binary",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobStorageLocation",
+				"container": "targetblobcontainer"
+			}
+		}
+	}
+}

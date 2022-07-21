@@ -1,5 +1,5 @@
 {
-	"name": "TempQCJsonCopyToHosBlobPipeline",
+	"name": "QCBlobCopyToHosBlobPipeline",
 	"properties": {
 		"activities": [
 			{
@@ -16,7 +16,7 @@
 				"userProperties": [],
 				"typeProperties": {
 					"dataset": {
-						"referenceName": "srcqcbinarydatasetallfiles",
+						"referenceName": "QcbinaryDataset",
 						"type": "DatasetReference"
 					},
 					"fieldList": [
@@ -33,7 +33,7 @@
 				}
 			},
 			{
-				"name": "qcjsonfilter",
+				"name": "qcmediafilter",
 				"type": "Filter",
 				"dependsOn": [
 					{
@@ -50,17 +50,17 @@
 						"type": "Expression"
 					},
 					"condition": {
-						"value": "@endswith(item().name,'json')",
+						"value": "@not(endswith(item().name,'.json'))",
 						"type": "Expression"
 					}
 				}
 			},
 			{
-				"name": "qcjsonforeach",
+				"name": "qcmediaforeach",
 				"type": "ForEach",
 				"dependsOn": [
 					{
-						"activity": "qcjsonfilter",
+						"activity": "qcmediafilter",
 						"dependencyConditions": [
 							"Succeeded"
 						]
@@ -69,12 +69,12 @@
 				"userProperties": [],
 				"typeProperties": {
 					"items": {
-						"value": "@activity('qcjsonfilter').output.Value",
+						"value": "@activity('qcmediafilter').output.Value",
 						"type": "Expression"
 					},
 					"activities": [
 						{
-							"name": "qcjsoncopytohos",
+							"name": "qcmediacopytohos",
 							"type": "Copy",
 							"dependsOn": [],
 							"policy": {
@@ -106,16 +106,13 @@
 							},
 							"inputs": [
 								{
-									"referenceName": "srcqcbinarydataset",
-									"type": "DatasetReference",
-									"parameters": {
-										"filename": "@item().Name"
-									}
+									"referenceName": "qcmediadataset",
+									"type": "DatasetReference"
 								}
 							],
 							"outputs": [
 								{
-									"referenceName": "targethosjsondatasetv2",
+									"referenceName": "hosblobdataset",
 									"type": "DatasetReference"
 								}
 							]

@@ -1,11 +1,15 @@
 {
-	"name": "dataflow2",
+	"name": "QcJsonBlobToHosCosmoDataflow",
 	"properties": {
 		"type": "MappingDataFlow",
 		"typeProperties": {
 			"sources": [
 				{
-					"name": "source1"
+					"dataset": {
+						"referenceName": "SrcDatasetQC",
+						"type": "DatasetReference"
+					},
+					"name": "qcjsonstream"
 				}
 			],
 			"sinks": [
@@ -88,11 +92,13 @@
 				"          ClientSurveyLanguage as string,",
 				"          SurveyCompleted as string,",
 				"          comments as (JobId as string, UserName as string, UserType as string, Date as string, Note as string)[],",
-				"          Documents as (JobId as string, Location as string)[]",
+				"          Documents as string[]",
 				"     ),",
 				"     allowSchemaDrift: true,",
-				"     validateSchema: false) ~> source1",
-				"source1 sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false,",
+				"     documentForm: 'documentPerLine') ~> qcjsonstream",
+				"qcjsonstream sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     deletable:false,",
 				"     insertable:true,",
