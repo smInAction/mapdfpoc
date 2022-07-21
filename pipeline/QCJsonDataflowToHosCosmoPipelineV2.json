@@ -1,0 +1,128 @@
+{
+	"name": "QCJsonDataflowToHosCosmoPipelineV2",
+	"properties": {
+		"activities": [
+			{
+				"name": "qcblobmetadataactivity",
+				"type": "GetMetadata",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataset": {
+						"referenceName": "QcbinaryDataset",
+						"type": "DatasetReference"
+					},
+					"fieldList": [
+						"childItems"
+					],
+					"storeSettings": {
+						"type": "AzureBlobStorageReadSettings",
+						"recursive": true,
+						"enablePartitionDiscovery": false
+					},
+					"formatSettings": {
+						"type": "BinaryReadSettings"
+					}
+				}
+			},
+			{
+				"name": "qcmediafilter",
+				"type": "Filter",
+				"dependsOn": [
+					{
+						"activity": "qcblobmetadataactivity",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('qcblobmetadataactivity').output.childItems",
+						"type": "Expression"
+					},
+					"condition": {
+						"value": "@not(endswith(item().name,'.json'))",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "qcmediaforeach",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "qcmediafilter",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('qcmediafilter').output.Value",
+						"type": "Expression"
+					},
+					"activities": [
+						{
+							"name": "qcmediacopytohos",
+							"type": "Copy",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "7.00:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "BinarySource",
+									"storeSettings": {
+										"type": "AzureBlobStorageReadSettings",
+										"recursive": true
+									},
+									"formatSettings": {
+										"type": "BinaryReadSettings"
+									}
+								},
+								"sink": {
+									"type": "BinarySink",
+									"storeSettings": {
+										"type": "AzureBlobStorageWriteSettings"
+									}
+								},
+								"enableStaging": false
+							},
+							"inputs": [
+								{
+									"referenceName": "qcmediadataset",
+									"type": "DatasetReference"
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "hosblobdataset",
+									"type": "DatasetReference"
+								}
+							]
+						}
+					]
+				}
+			}
+		],
+		"annotations": [],
+		"lastPublishTime": "2022-07-04T09:25:47Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}
