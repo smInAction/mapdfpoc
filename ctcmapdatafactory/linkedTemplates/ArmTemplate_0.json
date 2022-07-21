@@ -111,7 +111,7 @@
 				"typeProperties": {
 					"location": {
 						"type": "AzureBlobStorageLocation",
-						"container": "dfblobcontainer"
+						"container": "targetblobcontainer"
 					}
 				}
 			},
@@ -133,8 +133,7 @@
 				"typeProperties": {
 					"location": {
 						"type": "AzureBlobStorageLocation",
-						"fileName": "*.json",
-						"container": "dfblobcontainer"
+						"container": "targetblobcontainer"
 					}
 				},
 				"schema": {
