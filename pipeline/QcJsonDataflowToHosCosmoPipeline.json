@@ -1,5 +1,5 @@
 {
-	"name": "pipelinedataflow",
+	"name": "QcJsonDataflowToHosCosmoPipeline",
 	"properties": {
 		"activities": [
 			{
