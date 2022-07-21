@@ -74,7 +74,7 @@
 					},
 					"activities": [
 						{
-							"name": "Copy data1",
+							"name": "qcpngcopytohos",
 							"type": "Copy",
 							"dependsOn": [],
 							"policy": {
@@ -115,7 +115,7 @@
 							],
 							"outputs": [
 								{
-									"referenceName": "targethosbinarydataset",
+									"referenceName": "targethospngdataset",
 									"type": "DatasetReference"
 								}
 							]
