@@ -97,7 +97,7 @@
 				"     allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     ignoreNoFilesFound: false,",
-				"     documentForm: 'documentPerLine') ~> qcjsonstream",
+				"     documentForm: 'arrayOfDocuments') ~> qcjsonstream",
 				"qcjsonstream sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     deletable:false,",
