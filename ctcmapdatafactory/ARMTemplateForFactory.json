@@ -33,7 +33,7 @@
 	},
 	"resources": [
 		{
-			"name": "[concat(parameters('factoryName'), '/map_dfpipeline')]",
+			"name": "[concat(parameters('factoryName'), '/qcpngcopypipeline')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
 			"properties": {
@@ -93,7 +93,7 @@
 						}
 					},
 					{
-						"name": "ForEach1",
+						"name": "qcpngforeach",
 						"type": "ForEach",
 						"dependsOn": [
 							{
@@ -111,7 +111,7 @@
 							},
 							"activities": [
 								{
-									"name": "Copy data1",
+									"name": "qcpngcopytohos",
 									"type": "Copy",
 									"dependsOn": [],
 									"policy": {
@@ -152,7 +152,7 @@
 									],
 									"outputs": [
 										{
-											"referenceName": "targethosbinarydataset",
+											"referenceName": "targethospngdataset",
 											"type": "DatasetReference",
 											"parameters": {}
 										}
@@ -172,7 +172,7 @@
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/datasets/srcqcbinarydatasetallfiles')]",
 				"[concat(variables('factoryId'), '/datasets/srcqcbinarydataset')]",
-				"[concat(variables('factoryId'), '/datasets/targethosbinarydataset')]"
+				"[concat(variables('factoryId'), '/datasets/targethospngdataset')]"
 			]
 		},
 		{
@@ -1634,6 +1634,195 @@
 				"[concat(variables('factoryId'), '/datasets/srcqcdatasetv2')]",
 				"[concat(variables('factoryId'), '/datasets/sinkhoscosmodataset')]",
 				"[concat(variables('factoryId'), '/linkedServices/dflinkedsvc')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/qcpdfcopypipeline')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "qcblobmetadataactivity",
+						"type": "GetMetadata",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataset": {
+								"referenceName": "srcqcbinarydatasetallfiles",
+								"type": "DatasetReference",
+								"parameters": {}
+							},
+							"fieldList": [
+								"childItems"
+							],
+							"storeSettings": {
+								"type": "AzureBlobStorageReadSettings",
+								"recursive": true,
+								"enablePartitionDiscovery": false
+							},
+							"formatSettings": {
+								"type": "BinaryReadSettings"
+							}
+						}
+					},
+					{
+						"name": "qcpdffilter",
+						"type": "Filter",
+						"dependsOn": [
+							{
+								"activity": "qcblobmetadataactivity",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@activity('qcblobmetadataactivity').output.childItems",
+								"type": "Expression"
+							},
+							"condition": {
+								"value": "@endswith(item().name,'pdf')",
+								"type": "Expression"
+							}
+						}
+					},
+					{
+						"name": "qcpdfforeach",
+						"type": "ForEach",
+						"dependsOn": [
+							{
+								"activity": "qcpdffilter",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@activity('qcpdffilter').output.Value",
+								"type": "Expression"
+							},
+							"activities": [
+								{
+									"name": "qcpdfcopytohos",
+									"type": "Copy",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "7.00:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "BinarySource",
+											"storeSettings": {
+												"type": "AzureBlobStorageReadSettings",
+												"recursive": true
+											},
+											"formatSettings": {
+												"type": "BinaryReadSettings"
+											}
+										},
+										"sink": {
+											"type": "BinarySink",
+											"storeSettings": {
+												"type": "AzureBlobStorageWriteSettings"
+											}
+										},
+										"enableStaging": false
+									},
+									"inputs": [
+										{
+											"referenceName": "srcqcbinarydataset",
+											"type": "DatasetReference",
+											"parameters": {
+												"filename": "@item().Name"
+											}
+										}
+									],
+									"outputs": [
+										{
+											"referenceName": "targethospdfdataset",
+											"type": "DatasetReference",
+											"parameters": {}
+										}
+									]
+								}
+							]
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {},
+					"cancelAfter": {}
+				},
+				"annotations": [],
+				"lastPublishTime": "2022-07-04T09:25:47Z"
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/srcqcbinarydatasetallfiles')]",
+				"[concat(variables('factoryId'), '/datasets/srcqcbinarydataset')]",
+				"[concat(variables('factoryId'), '/datasets/targethospdfdataset')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/targethospdfdataset')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "BinaryLS",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "Binary",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"folderPath": "pdf",
+						"container": "targetblobcontainer"
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/BinaryLS')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/targethospngdataset')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "BinaryLS",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "Binary",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"folderPath": "images",
+						"container": "targetblobcontainer"
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/BinaryLS')]"
 			]
 		}
 	]

@@ -13,6 +13,215 @@
 	},
 	"resources": [
 		{
+			"name": "[concat(parameters('factoryName'), '/qcpngcopypipeline')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "qcblobmetadataactivity",
+						"type": "GetMetadata",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataset": {
+								"referenceName": "srcqcbinarydatasetallfiles",
+								"type": "DatasetReference",
+								"parameters": {}
+							},
+							"fieldList": [
+								"childItems"
+							],
+							"storeSettings": {
+								"type": "AzureBlobStorageReadSettings",
+								"recursive": true,
+								"enablePartitionDiscovery": false
+							},
+							"formatSettings": {
+								"type": "BinaryReadSettings"
+							}
+						}
+					},
+					{
+						"name": "qcpngfilter",
+						"type": "Filter",
+						"dependsOn": [
+							{
+								"activity": "qcblobmetadataactivity",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@activity('qcblobmetadataactivity').output.childItems",
+								"type": "Expression"
+							},
+							"condition": {
+								"value": "@endswith(item().name,'png')",
+								"type": "Expression"
+							}
+						}
+					},
+					{
+						"name": "qcpngforeach",
+						"type": "ForEach",
+						"dependsOn": [
+							{
+								"activity": "qcpngfilter",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@activity('qcpngfilter').output.Value",
+								"type": "Expression"
+							},
+							"activities": [
+								{
+									"name": "qcpngcopytohos",
+									"type": "Copy",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "7.00:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "BinarySource",
+											"storeSettings": {
+												"type": "AzureBlobStorageReadSettings",
+												"recursive": true
+											},
+											"formatSettings": {
+												"type": "BinaryReadSettings"
+											}
+										},
+										"sink": {
+											"type": "BinarySink",
+											"storeSettings": {
+												"type": "AzureBlobStorageWriteSettings"
+											}
+										},
+										"enableStaging": false
+									},
+									"inputs": [
+										{
+											"referenceName": "srcqcbinarydataset",
+											"type": "DatasetReference",
+											"parameters": {
+												"filename": "@item().Name"
+											}
+										}
+									],
+									"outputs": [
+										{
+											"referenceName": "targethospngdataset",
+											"type": "DatasetReference",
+											"parameters": {}
+										}
+									]
+								}
+							]
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {},
+					"cancelAfter": {}
+				},
+				"annotations": [],
+				"lastPublishTime": "2022-07-04T09:25:47Z"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/dataflow1')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "Json2",
+								"type": "DatasetReference"
+							},
+							"name": "blobsource"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "Targetcosmodataset",
+								"type": "DatasetReference"
+							},
+							"name": "cosmosink"
+						}
+					],
+					"transformations": [
+						{
+							"name": "mediacolumns"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          jobId as string,",
+						"          hybrisOrderId as string,",
+						"          clientInfo as (lastName as string, mobilePhone as string, email as string),",
+						"          pdfMedia as (linkToAttachment as string, catalog as string, uploadedDate as string, delete as string)[],",
+						"          imageMedia as (linkToAttachment as string, catalog as string, uploadedDate as string, delete as string)[],",
+						"          trackingDetails as (linkToAttachment as string, catalog as string, uploadedDate as string, delete as string)[],",
+						"          complaints as (date as string, reason as string, text as string)[]",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false,",
+						"     documentForm: 'arrayOfDocuments') ~> blobsource",
+						"blobsource derive({pdfMedia.linkToAttachment} = 'pdfmedia/' + pdfMedia.linkToAttachment,",
+						"          {imageMedia.linkToAttachment} = 'imagemedia/' + imageMedia.linkToAttachment,",
+						"          {trackingDetails.linkToAttachment} = 'trackingmedia/' + trackingDetails.linkToAttachment) ~> mediacolumns",
+						"mediacolumns sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     input(",
+						"          jobId as string,",
+						"          hybrisOrderId as string,",
+						"          clientInfo as (lastName as string, mobilePhone as string, email as string),",
+						"          pdfMedia as (linkToAttachment as string, catalog as string, uploadedDate as string, delete as string)[],",
+						"          imageMedia as (linkToAttachment as string, catalog as string, uploadedDate as string, delete as string)[],",
+						"          trackingDetails as (linkToAttachment as string, catalog as string, uploadedDate as string, delete as string)[],",
+						"          complaints as (date as string, reason as string, text as string)[]",
+						"     ),",
+						"     deletable:false,",
+						"     insertable:true,",
+						"     updateable:false,",
+						"     upsertable:false,",
+						"     format: 'document',",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> cosmosink"
+					]
+				}
+			},
+			"dependsOn": []
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/dataflow2')]",
 			"type": "Microsoft.DataFactory/factories/dataflows",
 			"apiVersion": "2018-06-01",
@@ -125,6 +334,145 @@
 						"     skipDuplicateMapOutputs: true) ~> sink1"
 					]
 				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/qcpdfcopypipeline')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "qcblobmetadataactivity",
+						"type": "GetMetadata",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataset": {
+								"referenceName": "srcqcbinarydatasetallfiles",
+								"type": "DatasetReference",
+								"parameters": {}
+							},
+							"fieldList": [
+								"childItems"
+							],
+							"storeSettings": {
+								"type": "AzureBlobStorageReadSettings",
+								"recursive": true,
+								"enablePartitionDiscovery": false
+							},
+							"formatSettings": {
+								"type": "BinaryReadSettings"
+							}
+						}
+					},
+					{
+						"name": "qcpdffilter",
+						"type": "Filter",
+						"dependsOn": [
+							{
+								"activity": "qcblobmetadataactivity",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@activity('qcblobmetadataactivity').output.childItems",
+								"type": "Expression"
+							},
+							"condition": {
+								"value": "@endswith(item().name,'pdf')",
+								"type": "Expression"
+							}
+						}
+					},
+					{
+						"name": "qcpdfforeach",
+						"type": "ForEach",
+						"dependsOn": [
+							{
+								"activity": "qcpdffilter",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@activity('qcpdffilter').output.Value",
+								"type": "Expression"
+							},
+							"activities": [
+								{
+									"name": "qcpdfcopytohos",
+									"type": "Copy",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "7.00:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "BinarySource",
+											"storeSettings": {
+												"type": "AzureBlobStorageReadSettings",
+												"recursive": true
+											},
+											"formatSettings": {
+												"type": "BinaryReadSettings"
+											}
+										},
+										"sink": {
+											"type": "BinarySink",
+											"storeSettings": {
+												"type": "AzureBlobStorageWriteSettings"
+											}
+										},
+										"enableStaging": false
+									},
+									"inputs": [
+										{
+											"referenceName": "srcqcbinarydataset",
+											"type": "DatasetReference",
+											"parameters": {
+												"filename": "@item().Name"
+											}
+										}
+									],
+									"outputs": [
+										{
+											"referenceName": "targethospdfdataset",
+											"type": "DatasetReference",
+											"parameters": {}
+										}
+									]
+								}
+							]
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {},
+					"cancelAfter": {}
+				},
+				"annotations": [],
+				"lastPublishTime": "2022-07-04T09:25:47Z"
 			},
 			"dependsOn": []
 		},

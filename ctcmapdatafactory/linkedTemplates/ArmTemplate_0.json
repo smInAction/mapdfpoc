@@ -1254,219 +1254,49 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/map_dfpipeline')]",
-			"type": "Microsoft.DataFactory/factories/pipelines",
+			"name": "[concat(parameters('factoryName'), '/targethospdfdataset')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",
 			"properties": {
-				"activities": [
-					{
-						"name": "qcblobmetadataactivity",
-						"type": "GetMetadata",
-						"dependsOn": [],
-						"policy": {
-							"timeout": "7.00:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"dataset": {
-								"referenceName": "srcqcbinarydatasetallfiles",
-								"type": "DatasetReference",
-								"parameters": {}
-							},
-							"fieldList": [
-								"childItems"
-							],
-							"storeSettings": {
-								"type": "AzureBlobStorageReadSettings",
-								"recursive": true,
-								"enablePartitionDiscovery": false
-							},
-							"formatSettings": {
-								"type": "BinaryReadSettings"
-							}
-						}
-					},
-					{
-						"name": "qcpngfilter",
-						"type": "Filter",
-						"dependsOn": [
-							{
-								"activity": "qcblobmetadataactivity",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
-						"userProperties": [],
-						"typeProperties": {
-							"items": {
-								"value": "@activity('qcblobmetadataactivity').output.childItems",
-								"type": "Expression"
-							},
-							"condition": {
-								"value": "@endswith(item().name,'png')",
-								"type": "Expression"
-							}
-						}
-					},
-					{
-						"name": "ForEach1",
-						"type": "ForEach",
-						"dependsOn": [
-							{
-								"activity": "qcpngfilter",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
-						"userProperties": [],
-						"typeProperties": {
-							"items": {
-								"value": "@activity('qcpngfilter').output.Value",
-								"type": "Expression"
-							},
-							"activities": [
-								{
-									"name": "Copy data1",
-									"type": "Copy",
-									"dependsOn": [],
-									"policy": {
-										"timeout": "7.00:00:00",
-										"retry": 0,
-										"retryIntervalInSeconds": 30,
-										"secureOutput": false,
-										"secureInput": false
-									},
-									"userProperties": [],
-									"typeProperties": {
-										"source": {
-											"type": "BinarySource",
-											"storeSettings": {
-												"type": "AzureBlobStorageReadSettings",
-												"recursive": true
-											},
-											"formatSettings": {
-												"type": "BinaryReadSettings"
-											}
-										},
-										"sink": {
-											"type": "BinarySink",
-											"storeSettings": {
-												"type": "AzureBlobStorageWriteSettings"
-											}
-										},
-										"enableStaging": false
-									},
-									"inputs": [
-										{
-											"referenceName": "srcqcbinarydataset",
-											"type": "DatasetReference",
-											"parameters": {
-												"filename": "@item().Name"
-											}
-										}
-									],
-									"outputs": [
-										{
-											"referenceName": "targethosbinarydataset",
-											"type": "DatasetReference",
-											"parameters": {}
-										}
-									]
-								}
-							]
-						}
-					}
-				],
-				"policy": {
-					"elapsedTimeMetric": {},
-					"cancelAfter": {}
+				"linkedServiceName": {
+					"referenceName": "BinaryLS",
+					"type": "LinkedServiceReference"
 				},
 				"annotations": [],
-				"lastPublishTime": "2022-07-04T09:25:47Z"
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/datasets/srcqcbinarydatasetallfiles')]",
-				"[concat(variables('factoryId'), '/datasets/srcqcbinarydataset')]",
-				"[concat(variables('factoryId'), '/datasets/targethosbinarydataset')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/dataflow1')]",
-			"type": "Microsoft.DataFactory/factories/dataflows",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"type": "MappingDataFlow",
+				"type": "Binary",
 				"typeProperties": {
-					"sources": [
-						{
-							"dataset": {
-								"referenceName": "Json2",
-								"type": "DatasetReference"
-							},
-							"name": "blobsource"
-						}
-					],
-					"sinks": [
-						{
-							"dataset": {
-								"referenceName": "Targetcosmodataset",
-								"type": "DatasetReference"
-							},
-							"name": "cosmosink"
-						}
-					],
-					"transformations": [
-						{
-							"name": "mediacolumns"
-						}
-					],
-					"scriptLines": [
-						"source(output(",
-						"          jobId as string,",
-						"          hybrisOrderId as string,",
-						"          clientInfo as (lastName as string, mobilePhone as string, email as string),",
-						"          pdfMedia as (linkToAttachment as string, catalog as string, uploadedDate as string, delete as string)[],",
-						"          imageMedia as (linkToAttachment as string, catalog as string, uploadedDate as string, delete as string)[],",
-						"          trackingDetails as (linkToAttachment as string, catalog as string, uploadedDate as string, delete as string)[],",
-						"          complaints as (date as string, reason as string, text as string)[]",
-						"     ),",
-						"     allowSchemaDrift: true,",
-						"     validateSchema: false,",
-						"     ignoreNoFilesFound: false,",
-						"     documentForm: 'arrayOfDocuments') ~> blobsource",
-						"blobsource derive({pdfMedia.linkToAttachment} = 'pdfmedia/' + pdfMedia.linkToAttachment,",
-						"          {imageMedia.linkToAttachment} = 'imagemedia/' + imageMedia.linkToAttachment,",
-						"          {trackingDetails.linkToAttachment} = 'trackingmedia/' + trackingDetails.linkToAttachment) ~> mediacolumns",
-						"mediacolumns sink(allowSchemaDrift: true,",
-						"     validateSchema: false,",
-						"     input(",
-						"          jobId as string,",
-						"          hybrisOrderId as string,",
-						"          clientInfo as (lastName as string, mobilePhone as string, email as string),",
-						"          pdfMedia as (linkToAttachment as string, catalog as string, uploadedDate as string, delete as string)[],",
-						"          imageMedia as (linkToAttachment as string, catalog as string, uploadedDate as string, delete as string)[],",
-						"          trackingDetails as (linkToAttachment as string, catalog as string, uploadedDate as string, delete as string)[],",
-						"          complaints as (date as string, reason as string, text as string)[]",
-						"     ),",
-						"     deletable:false,",
-						"     insertable:true,",
-						"     updateable:false,",
-						"     upsertable:false,",
-						"     format: 'document',",
-						"     skipDuplicateMapInputs: true,",
-						"     skipDuplicateMapOutputs: true) ~> cosmosink"
-					]
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"folderPath": "pdf",
+						"container": "targetblobcontainer"
+					}
 				}
 			},
 			"dependsOn": [
-				"[concat(variables('factoryId'), '/datasets/Json2')]",
-				"[concat(variables('factoryId'), '/datasets/Targetcosmodataset')]"
+				"[concat(variables('factoryId'), '/linkedServices/BinaryLS')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/targethospngdataset')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "BinaryLS",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "Binary",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"folderPath": "images",
+						"container": "targetblobcontainer"
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/BinaryLS')]"
 			]
 		}
 	]
