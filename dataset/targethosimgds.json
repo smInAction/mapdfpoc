@@ -1,5 +1,5 @@
 {
-	"name": "srcqcbinarydataset",
+	"name": "targethosimgds",
 	"properties": {
 		"linkedServiceName": {
 			"referenceName": "BinaryLS",
@@ -10,7 +10,8 @@
 		"typeProperties": {
 			"location": {
 				"type": "AzureBlobStorageLocation",
-				"container": "dfblobcontainer"
+				"folderPath": "images",
+				"container": "qcblobcontainer"
 			}
 		}
 	}
