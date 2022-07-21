@@ -16,7 +16,7 @@
 		"typeProperties": {
 			"location": {
 				"type": "AzureBlobStorageLocation",
-				"fileName": "@dataset().FileName",
+				"fileName": "@dataset().filename",
 				"container": "dfblobcontainer"
 			}
 		}
