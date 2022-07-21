@@ -5,6 +5,12 @@
 			"referenceName": "BinaryLS",
 			"type": "LinkedServiceReference"
 		},
+		"parameters": {
+			"filename": {
+				"type": "string",
+				"defaultValue": "@item().Name"
+			}
+		},
 		"annotations": [],
 		"type": "Binary",
 		"typeProperties": {
