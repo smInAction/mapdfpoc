@@ -56,7 +56,7 @@
 				}
 			},
 			{
-				"name": "qcjsonforeachv2",
+				"name": "ForEach1",
 				"type": "ForEach",
 				"dependsOn": [
 					{
@@ -74,7 +74,7 @@
 					},
 					"activities": [
 						{
-							"name": "qctohosdataflowv2",
+							"name": "Data flow1",
 							"type": "ExecuteDataFlow",
 							"dependsOn": [],
 							"policy": {
