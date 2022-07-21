@@ -33,7 +33,7 @@
 				}
 			},
 			{
-				"name": "qcmediafilter",
+				"name": "qcjsonfilterv2",
 				"type": "Filter",
 				"dependsOn": [
 					{
@@ -46,21 +46,21 @@
 				"userProperties": [],
 				"typeProperties": {
 					"items": {
-						"value": "@activity('qcblobmetadataactivity').output.childItems",
+						"value": "@activity('qcjsonmetadataactivity').output.childItems",
 						"type": "Expression"
 					},
 					"condition": {
-						"value": "@not(endswith(item().name,'.json'))",
+						"value": "@endswith(item().name,'json')",
 						"type": "Expression"
 					}
 				}
 			},
 			{
-				"name": "qcmediaforeach",
+				"name": "qcjsonforeachv2",
 				"type": "ForEach",
 				"dependsOn": [
 					{
-						"activity": "qcmediafilter",
+						"activity": "qcjsonfilterv2",
 						"dependencyConditions": [
 							"Succeeded"
 						]
@@ -69,16 +69,16 @@
 				"userProperties": [],
 				"typeProperties": {
 					"items": {
-						"value": "@activity('qcmediafilter').output.Value",
+						"value": "@activity('qcjsonfilterv2').output.Value",
 						"type": "Expression"
 					},
 					"activities": [
 						{
-							"name": "qcmediacopytohos",
-							"type": "Copy",
+							"name": "qctohosdataflowv2",
+							"type": "ExecuteDataFlow",
 							"dependsOn": [],
 							"policy": {
-								"timeout": "7.00:00:00",
+								"timeout": "1.00:00:00",
 								"retry": 0,
 								"retryIntervalInSeconds": 30,
 								"secureOutput": false,
@@ -86,36 +86,16 @@
 							},
 							"userProperties": [],
 							"typeProperties": {
-								"source": {
-									"type": "BinarySource",
-									"storeSettings": {
-										"type": "AzureBlobStorageReadSettings",
-										"recursive": true
-									},
-									"formatSettings": {
-										"type": "BinaryReadSettings"
-									}
+								"dataflow": {
+									"referenceName": "QcJsonBlobToHosCosmoDataflow",
+									"type": "DataFlowReference"
 								},
-								"sink": {
-									"type": "BinarySink",
-									"storeSettings": {
-										"type": "AzureBlobStorageWriteSettings"
-									}
+								"compute": {
+									"coreCount": 8,
+									"computeType": "General"
 								},
-								"enableStaging": false
-							},
-							"inputs": [
-								{
-									"referenceName": "qcmediadataset",
-									"type": "DatasetReference"
-								}
-							],
-							"outputs": [
-								{
-									"referenceName": "hosblobdataset",
-									"type": "DatasetReference"
-								}
-							]
+								"traceLevel": "Fine"
+							}
 						}
 					]
 				}
