@@ -1,0 +1,97 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"type": "string",
+			"metadata": "Data Factory name",
+			"defaultValue": "ctcmapdatafactory"
+		},
+		"BinaryLS_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'BinaryLS'"
+		},
+		"dfcosmolink_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'dfcosmolink'"
+		},
+		"dflinkedsvc_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'dflinkedsvc'"
+		},
+		"hoscosmols_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'hoscosmols'"
+		},
+		"mapdflinkedservice_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'mapdflinkedservice'"
+		},
+		"containerUri": {
+			"type": "string",
+			"metadata": "URI to storage account containing linked ARM templates"
+		},
+		"containerSasToken": {
+			"type": "string",
+			"metadata": "Sas token to storage account containing linked ARM templates"
+		}
+	},
+	"variables": {
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+	},
+	"resources": [
+		{
+			"name": "ctcmapdatafactory_ArmTemplate_0",
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2018-02-01",
+			"properties": {
+				"mode": "incremental",
+				"templateLink": {
+					"uri": "[concat(parameters('containerUri'), '/ArmTemplate_0.json', parameters('containerSasToken'))]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters": {
+					"factoryName": {
+						"value": "[parameters('factoryName')]"
+					},
+					"BinaryLS_connectionString": {
+						"value": "[parameters('BinaryLS_connectionString')]"
+					},
+					"dfcosmolink_connectionString": {
+						"value": "[parameters('dfcosmolink_connectionString')]"
+					},
+					"dflinkedsvc_connectionString": {
+						"value": "[parameters('dflinkedsvc_connectionString')]"
+					},
+					"hoscosmols_connectionString": {
+						"value": "[parameters('hoscosmols_connectionString')]"
+					},
+					"mapdflinkedservice_connectionString": {
+						"value": "[parameters('mapdflinkedservice_connectionString')]"
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "ctcmapdatafactory_ArmTemplate_1",
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2018-02-01",
+			"properties": {
+				"mode": "incremental",
+				"templateLink": {
+					"uri": "[concat(parameters('containerUri'), '/ArmTemplate_1.json', parameters('containerSasToken'))]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters": {
+					"factoryName": {
+						"value": "[parameters('factoryName')]"
+					}
+				}
+			},
+			"dependsOn": [
+				"[resourceId('Microsoft.Resources/deployments', 'ctcmapdatafactory_ArmTemplate_0')]"
+			]
+		}
+	]
+}

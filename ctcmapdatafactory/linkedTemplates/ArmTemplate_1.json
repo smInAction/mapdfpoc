@@ -1,0 +1,179 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"type": "string",
+			"metadata": "Data Factory name",
+			"defaultValue": "ctcmapdatafactory"
+		}
+	},
+	"variables": {
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+	},
+	"resources": [
+		{
+			"name": "[concat(parameters('factoryName'), '/dataflow2')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "srcqcdatasetv2",
+								"type": "DatasetReference"
+							},
+							"name": "source1"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "sinkhoscosmodataset",
+								"type": "DatasetReference"
+							},
+							"name": "sink1",
+							"rejectedDataLinkedService": {
+								"referenceName": "dflinkedsvc",
+								"type": "LinkedServiceReference"
+							}
+						}
+					],
+					"transformations": [],
+					"scriptLines": [
+						"source(output(",
+						"          ParentId as string,",
+						"          FromDate as string,",
+						"          ToDate as string,",
+						"          JobId as string,",
+						"          Receiveddate as string,",
+						"          MultiUnitDiscount as string,",
+						"          OriginalDeliveryDate as string,",
+						"          BookedInstallforDateTime as string,",
+						"          BookedTimeWindow as string,",
+						"          ClientInfo as string,",
+						"          CustomerAddress1 as string,",
+						"          CustomerAddress2 as string,",
+						"          CustomerCity as string,",
+						"          CustomerProvince as string,",
+						"          CustomerPostalCode as string,",
+						"          CustomerHomePhone as string,",
+						"          CustomerAlternatePhone as string,",
+						"          CustomerMobilePhone as string,",
+						"          ClientEmail as string,",
+						"          PreferredMethodofCommunication as string,",
+						"          Make as string,",
+						"          ModelNumber as string,",
+						"          SerialNumber as string,",
+						"          Description as string,",
+						"          PaymentType as string,",
+						"          TrackingNumber as string,",
+						"          DealerName as string,",
+						"          District as string,",
+						"          OrderNumber as string,",
+						"          TicketNumber as string,",
+						"          AuthorizationNumber as string,",
+						"          POforadditionalwork as string,",
+						"          Status as string,",
+						"          ReceivedFrom as string,",
+						"          JobType as string,",
+						"          Product1 as string,",
+						"          QTY1 as string,",
+						"          Product2 as string,",
+						"          QTY2 as string,",
+						"          Product3 as string,",
+						"          QTY3 as string,",
+						"          Product4 as string,",
+						"          QTY4 as string,",
+						"          Product5 as string,",
+						"          QTY5 as string,",
+						"          Product6 as string,",
+						"          QTY6 as string,",
+						"          Product7 as string,",
+						"          QTY7 as string,",
+						"          Product8 as string,",
+						"          QTY8 as string,",
+						"          Product9 as string,",
+						"          QTY9 as string,",
+						"          Product10 as string,",
+						"          QTY10 as string,",
+						"          JobStatus as string,",
+						"          TimeOnTask as string,",
+						"          AdminArea as string,",
+						"          AssignedTo as string,",
+						"          InvoiceDate as string,",
+						"          Call as string,",
+						"          ClientSurveyLanguage as string,",
+						"          SurveyCompleted as string,",
+						"          comments as (JobId as string, UserName as string, UserType as string, Date as string, Note as string)[],",
+						"          Documents as (JobId as string, Location as string)[]",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false,",
+						"     documentForm: 'arrayOfDocuments') ~> source1",
+						"source1 sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     deletable:false,",
+						"     insertable:true,",
+						"     updateable:false,",
+						"     upsertable:false,",
+						"     format: 'document',",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> sink1"
+					]
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/pipelinedataflow')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Data flow1",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "1.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "dataflow2",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"source1": {},
+									"sink1": {}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {},
+					"cancelAfter": {}
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/dataflows/dataflow2')]"
+			]
+		}
+	]
+}
