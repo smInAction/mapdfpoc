@@ -3,7 +3,7 @@
 	"properties": {
 		"activities": [
 			{
-				"name": "qcblobmetadataactivity",
+				"name": "qcjsonmetadataactivity",
 				"type": "GetMetadata",
 				"dependsOn": [],
 				"policy": {
@@ -16,7 +16,7 @@
 				"userProperties": [],
 				"typeProperties": {
 					"dataset": {
-						"referenceName": "QcbinaryDataset",
+						"referenceName": "SrcDatasetQC",
 						"type": "DatasetReference"
 					},
 					"fieldList": [
@@ -28,7 +28,7 @@
 						"enablePartitionDiscovery": false
 					},
 					"formatSettings": {
-						"type": "BinaryReadSettings"
+						"type": "JsonReadSettings"
 					}
 				}
 			},
@@ -37,7 +37,7 @@
 				"type": "Filter",
 				"dependsOn": [
 					{
-						"activity": "qcblobmetadataactivity",
+						"activity": "qcjsonmetadataactivity",
 						"dependencyConditions": [
 							"Succeeded"
 						]
