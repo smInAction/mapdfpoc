@@ -13,332 +13,27 @@
 	},
 	"resources": [
 		{
-			"name": "[concat(parameters('factoryName'), '/qcpngcopypipeline')]",
-			"type": "Microsoft.DataFactory/factories/pipelines",
+			"name": "[concat(parameters('factoryName'), '/hosblobdataset')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",
 			"properties": {
-				"activities": [
-					{
-						"name": "qcblobmetadataactivity",
-						"type": "GetMetadata",
-						"dependsOn": [],
-						"policy": {
-							"timeout": "7.00:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"dataset": {
-								"referenceName": "srcqcbinarydatasetallfiles",
-								"type": "DatasetReference",
-								"parameters": {}
-							},
-							"fieldList": [
-								"childItems"
-							],
-							"storeSettings": {
-								"type": "AzureBlobStorageReadSettings",
-								"recursive": true,
-								"enablePartitionDiscovery": false
-							},
-							"formatSettings": {
-								"type": "BinaryReadSettings"
-							}
-						}
-					},
-					{
-						"name": "qcpngfilter",
-						"type": "Filter",
-						"dependsOn": [
-							{
-								"activity": "qcblobmetadataactivity",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
-						"userProperties": [],
-						"typeProperties": {
-							"items": {
-								"value": "@activity('qcblobmetadataactivity').output.childItems",
-								"type": "Expression"
-							},
-							"condition": {
-								"value": "@endswith(item().name,'png')",
-								"type": "Expression"
-							}
-						}
-					},
-					{
-						"name": "qcpngforeach",
-						"type": "ForEach",
-						"dependsOn": [
-							{
-								"activity": "qcpngfilter",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
-						"userProperties": [],
-						"typeProperties": {
-							"items": {
-								"value": "@activity('qcpngfilter').output.Value",
-								"type": "Expression"
-							},
-							"activities": [
-								{
-									"name": "qcpngcopytohos",
-									"type": "Copy",
-									"dependsOn": [],
-									"policy": {
-										"timeout": "7.00:00:00",
-										"retry": 0,
-										"retryIntervalInSeconds": 30,
-										"secureOutput": false,
-										"secureInput": false
-									},
-									"userProperties": [],
-									"typeProperties": {
-										"source": {
-											"type": "BinarySource",
-											"storeSettings": {
-												"type": "AzureBlobStorageReadSettings",
-												"recursive": true
-											},
-											"formatSettings": {
-												"type": "BinaryReadSettings"
-											}
-										},
-										"sink": {
-											"type": "BinarySink",
-											"storeSettings": {
-												"type": "AzureBlobStorageWriteSettings"
-											}
-										},
-										"enableStaging": false
-									},
-									"inputs": [
-										{
-											"referenceName": "srcqcbinarydataset",
-											"type": "DatasetReference",
-											"parameters": {
-												"filename": "@item().Name"
-											}
-										}
-									],
-									"outputs": [
-										{
-											"referenceName": "targethospngdataset",
-											"type": "DatasetReference",
-											"parameters": {}
-										}
-									]
-								}
-							]
-						}
-					}
-				],
-				"policy": {
-					"elapsedTimeMetric": {},
-					"cancelAfter": {}
+				"linkedServiceName": {
+					"referenceName": "BinaryLS",
+					"type": "LinkedServiceReference"
 				},
 				"annotations": [],
-				"lastPublishTime": "2022-07-04T09:25:47Z"
-			},
-			"dependsOn": []
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/dataflow1')]",
-			"type": "Microsoft.DataFactory/factories/dataflows",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"type": "MappingDataFlow",
+				"type": "Binary",
 				"typeProperties": {
-					"sources": [
-						{
-							"dataset": {
-								"referenceName": "Json2",
-								"type": "DatasetReference"
-							},
-							"name": "blobsource"
-						}
-					],
-					"sinks": [
-						{
-							"dataset": {
-								"referenceName": "Targetcosmodataset",
-								"type": "DatasetReference"
-							},
-							"name": "cosmosink"
-						}
-					],
-					"transformations": [
-						{
-							"name": "mediacolumns"
-						}
-					],
-					"scriptLines": [
-						"source(output(",
-						"          jobId as string,",
-						"          hybrisOrderId as string,",
-						"          clientInfo as (lastName as string, mobilePhone as string, email as string),",
-						"          pdfMedia as (linkToAttachment as string, catalog as string, uploadedDate as string, delete as string)[],",
-						"          imageMedia as (linkToAttachment as string, catalog as string, uploadedDate as string, delete as string)[],",
-						"          trackingDetails as (linkToAttachment as string, catalog as string, uploadedDate as string, delete as string)[],",
-						"          complaints as (date as string, reason as string, text as string)[]",
-						"     ),",
-						"     allowSchemaDrift: true,",
-						"     validateSchema: false,",
-						"     ignoreNoFilesFound: false,",
-						"     documentForm: 'arrayOfDocuments') ~> blobsource",
-						"blobsource derive({pdfMedia.linkToAttachment} = 'pdfmedia/' + pdfMedia.linkToAttachment,",
-						"          {imageMedia.linkToAttachment} = 'imagemedia/' + imageMedia.linkToAttachment,",
-						"          {trackingDetails.linkToAttachment} = 'trackingmedia/' + trackingDetails.linkToAttachment) ~> mediacolumns",
-						"mediacolumns sink(allowSchemaDrift: true,",
-						"     validateSchema: false,",
-						"     input(",
-						"          jobId as string,",
-						"          hybrisOrderId as string,",
-						"          clientInfo as (lastName as string, mobilePhone as string, email as string),",
-						"          pdfMedia as (linkToAttachment as string, catalog as string, uploadedDate as string, delete as string)[],",
-						"          imageMedia as (linkToAttachment as string, catalog as string, uploadedDate as string, delete as string)[],",
-						"          trackingDetails as (linkToAttachment as string, catalog as string, uploadedDate as string, delete as string)[],",
-						"          complaints as (date as string, reason as string, text as string)[]",
-						"     ),",
-						"     deletable:false,",
-						"     insertable:true,",
-						"     updateable:false,",
-						"     upsertable:false,",
-						"     format: 'document',",
-						"     skipDuplicateMapInputs: true,",
-						"     skipDuplicateMapOutputs: true) ~> cosmosink"
-					]
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"container": "hosblobcontainer"
+					}
 				}
 			},
 			"dependsOn": []
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/dataflow2')]",
-			"type": "Microsoft.DataFactory/factories/dataflows",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"type": "MappingDataFlow",
-				"typeProperties": {
-					"sources": [
-						{
-							"dataset": {
-								"referenceName": "srcqcdatasetv2",
-								"type": "DatasetReference"
-							},
-							"name": "source1"
-						}
-					],
-					"sinks": [
-						{
-							"dataset": {
-								"referenceName": "sinkhoscosmodataset",
-								"type": "DatasetReference"
-							},
-							"name": "sink1",
-							"rejectedDataLinkedService": {
-								"referenceName": "dflinkedsvc",
-								"type": "LinkedServiceReference"
-							}
-						}
-					],
-					"transformations": [],
-					"scriptLines": [
-						"source(output(",
-						"          ParentId as string,",
-						"          FromDate as string,",
-						"          ToDate as string,",
-						"          JobId as string,",
-						"          Receiveddate as string,",
-						"          MultiUnitDiscount as string,",
-						"          OriginalDeliveryDate as string,",
-						"          BookedInstallforDateTime as string,",
-						"          BookedTimeWindow as string,",
-						"          ClientInfo as string,",
-						"          CustomerAddress1 as string,",
-						"          CustomerAddress2 as string,",
-						"          CustomerCity as string,",
-						"          CustomerProvince as string,",
-						"          CustomerPostalCode as string,",
-						"          CustomerHomePhone as string,",
-						"          CustomerAlternatePhone as string,",
-						"          CustomerMobilePhone as string,",
-						"          ClientEmail as string,",
-						"          PreferredMethodofCommunication as string,",
-						"          Make as string,",
-						"          ModelNumber as string,",
-						"          SerialNumber as string,",
-						"          Description as string,",
-						"          PaymentType as string,",
-						"          TrackingNumber as string,",
-						"          DealerName as string,",
-						"          District as string,",
-						"          OrderNumber as string,",
-						"          TicketNumber as string,",
-						"          AuthorizationNumber as string,",
-						"          POforadditionalwork as string,",
-						"          Status as string,",
-						"          ReceivedFrom as string,",
-						"          JobType as string,",
-						"          Product1 as string,",
-						"          QTY1 as string,",
-						"          Product2 as string,",
-						"          QTY2 as string,",
-						"          Product3 as string,",
-						"          QTY3 as string,",
-						"          Product4 as string,",
-						"          QTY4 as string,",
-						"          Product5 as string,",
-						"          QTY5 as string,",
-						"          Product6 as string,",
-						"          QTY6 as string,",
-						"          Product7 as string,",
-						"          QTY7 as string,",
-						"          Product8 as string,",
-						"          QTY8 as string,",
-						"          Product9 as string,",
-						"          QTY9 as string,",
-						"          Product10 as string,",
-						"          QTY10 as string,",
-						"          JobStatus as string,",
-						"          TimeOnTask as string,",
-						"          AdminArea as string,",
-						"          AssignedTo as string,",
-						"          InvoiceDate as string,",
-						"          Call as string,",
-						"          ClientSurveyLanguage as string,",
-						"          SurveyCompleted as string,",
-						"          comments as (JobId as string, UserName as string, UserType as string, Date as string, Note as string)[],",
-						"          Documents as (JobId as string, Location as string)[]",
-						"     ),",
-						"     allowSchemaDrift: true,",
-						"     validateSchema: false,",
-						"     ignoreNoFilesFound: false,",
-						"     documentForm: 'arrayOfDocuments') ~> source1",
-						"source1 sink(allowSchemaDrift: true,",
-						"     validateSchema: false,",
-						"     deletable:false,",
-						"     insertable:true,",
-						"     updateable:false,",
-						"     upsertable:false,",
-						"     format: 'document',",
-						"     skipDuplicateMapInputs: true,",
-						"     skipDuplicateMapOutputs: true) ~> sink1"
-					]
-				}
-			},
-			"dependsOn": []
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/qcpdfcopypipeline')]",
+			"name": "[concat(parameters('factoryName'), '/QcPdfCopytoHosBlobPipeline')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
 			"properties": {
@@ -477,7 +172,540 @@
 			"dependsOn": []
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/pipelinedataflow')]",
+			"name": "[concat(parameters('factoryName'), '/QcPngCopyToHosBlobPipeline')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "qcblobmetadataactivity",
+						"type": "GetMetadata",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataset": {
+								"referenceName": "srcqcbinarydatasetallfiles",
+								"type": "DatasetReference",
+								"parameters": {}
+							},
+							"fieldList": [
+								"childItems"
+							],
+							"storeSettings": {
+								"type": "AzureBlobStorageReadSettings",
+								"recursive": true,
+								"enablePartitionDiscovery": false
+							},
+							"formatSettings": {
+								"type": "BinaryReadSettings"
+							}
+						}
+					},
+					{
+						"name": "qcpngfilter",
+						"type": "Filter",
+						"dependsOn": [
+							{
+								"activity": "qcblobmetadataactivity",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@activity('qcblobmetadataactivity').output.childItems",
+								"type": "Expression"
+							},
+							"condition": {
+								"value": "@endswith(item().name,'png')",
+								"type": "Expression"
+							}
+						}
+					},
+					{
+						"name": "qcpngforeach",
+						"type": "ForEach",
+						"dependsOn": [
+							{
+								"activity": "qcpngfilter",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@activity('qcpngfilter').output.Value",
+								"type": "Expression"
+							},
+							"activities": [
+								{
+									"name": "qcpngcopytohos",
+									"type": "Copy",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "7.00:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "BinarySource",
+											"storeSettings": {
+												"type": "AzureBlobStorageReadSettings",
+												"recursive": true
+											},
+											"formatSettings": {
+												"type": "BinaryReadSettings"
+											}
+										},
+										"sink": {
+											"type": "BinarySink",
+											"storeSettings": {
+												"type": "AzureBlobStorageWriteSettings"
+											}
+										},
+										"enableStaging": false
+									},
+									"inputs": [
+										{
+											"referenceName": "srcqcbinarydataset",
+											"type": "DatasetReference",
+											"parameters": {
+												"filename": "@item().Name"
+											}
+										}
+									],
+									"outputs": [
+										{
+											"referenceName": "targethospngdataset",
+											"type": "DatasetReference",
+											"parameters": {}
+										}
+									]
+								}
+							]
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {},
+					"cancelAfter": {}
+				},
+				"annotations": [],
+				"lastPublishTime": "2022-07-04T09:25:47Z"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/QcJsonBlobToHosCosmoDataflow')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "SrcDatasetQC",
+								"type": "DatasetReference"
+							},
+							"name": "qcjsonstream"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "sinkhoscosmodataset",
+								"type": "DatasetReference"
+							},
+							"name": "hoscosmostream",
+							"rejectedDataLinkedService": {
+								"referenceName": "dflinkedsvc",
+								"type": "LinkedServiceReference"
+							}
+						}
+					],
+					"transformations": [],
+					"scriptLines": [
+						"source(output(",
+						"          ParentId as string,",
+						"          FromDate as string,",
+						"          ToDate as string,",
+						"          JobId as string,",
+						"          Receiveddate as string,",
+						"          MultiUnitDiscount as string,",
+						"          OriginalDeliveryDate as string,",
+						"          BookedInstallforDateTime as string,",
+						"          BookedTimeWindow as string,",
+						"          ClientInfo as string,",
+						"          CustomerAddress1 as string,",
+						"          CustomerAddress2 as string,",
+						"          CustomerCity as string,",
+						"          CustomerProvince as string,",
+						"          CustomerPostalCode as string,",
+						"          CustomerHomePhone as string,",
+						"          CustomerAlternatePhone as string,",
+						"          CustomerMobilePhone as string,",
+						"          ClientEmail as string,",
+						"          PreferredMethodofCommunication as string,",
+						"          Make as string,",
+						"          ModelNumber as string,",
+						"          SerialNumber as string,",
+						"          Description as string,",
+						"          PaymentType as string,",
+						"          TrackingNumber as string,",
+						"          DealerName as string,",
+						"          District as string,",
+						"          OrderNumber as string,",
+						"          TicketNumber as string,",
+						"          AuthorizationNumber as string,",
+						"          POforadditionalwork as string,",
+						"          Status as string,",
+						"          ReceivedFrom as string,",
+						"          JobType as string,",
+						"          Product1 as string,",
+						"          QTY1 as string,",
+						"          Product2 as string,",
+						"          QTY2 as string,",
+						"          Product3 as string,",
+						"          QTY3 as string,",
+						"          Product4 as string,",
+						"          QTY4 as string,",
+						"          Product5 as string,",
+						"          QTY5 as string,",
+						"          Product6 as string,",
+						"          QTY6 as string,",
+						"          Product7 as string,",
+						"          QTY7 as string,",
+						"          Product8 as string,",
+						"          QTY8 as string,",
+						"          Product9 as string,",
+						"          QTY9 as string,",
+						"          Product10 as string,",
+						"          QTY10 as string,",
+						"          JobStatus as string,",
+						"          TimeOnTask as string,",
+						"          AdminArea as string,",
+						"          AssignedTo as string,",
+						"          InvoiceDate as string,",
+						"          Call as string,",
+						"          ClientSurveyLanguage as string,",
+						"          SurveyCompleted as string,",
+						"          comments as (JobId as string, UserName as string, UserType as string, Date as string, Note as string)[],",
+						"          Documents as string[]",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false,",
+						"     documentForm: 'arrayOfDocuments') ~> qcjsonstream",
+						"qcjsonstream sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     deletable:false,",
+						"     insertable:true,",
+						"     updateable:false,",
+						"     upsertable:false,",
+						"     format: 'document',",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> hoscosmostream"
+					]
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/TempQCJsonCopyToHosBlobPipeline')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "qcblobmetadataactivity",
+						"type": "GetMetadata",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataset": {
+								"referenceName": "srcqcbinarydatasetallfiles",
+								"type": "DatasetReference",
+								"parameters": {}
+							},
+							"fieldList": [
+								"childItems"
+							],
+							"storeSettings": {
+								"type": "AzureBlobStorageReadSettings",
+								"recursive": true,
+								"enablePartitionDiscovery": false
+							},
+							"formatSettings": {
+								"type": "BinaryReadSettings"
+							}
+						}
+					},
+					{
+						"name": "qcjsonfilter",
+						"type": "Filter",
+						"dependsOn": [
+							{
+								"activity": "qcblobmetadataactivity",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@activity('qcblobmetadataactivity').output.childItems",
+								"type": "Expression"
+							},
+							"condition": {
+								"value": "@endswith(item().name,'json')",
+								"type": "Expression"
+							}
+						}
+					},
+					{
+						"name": "qcjsonforeach",
+						"type": "ForEach",
+						"dependsOn": [
+							{
+								"activity": "qcjsonfilter",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@activity('qcjsonfilter').output.Value",
+								"type": "Expression"
+							},
+							"activities": [
+								{
+									"name": "qcjsoncopytohos",
+									"type": "Copy",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "7.00:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "BinarySource",
+											"storeSettings": {
+												"type": "AzureBlobStorageReadSettings",
+												"recursive": true
+											},
+											"formatSettings": {
+												"type": "BinaryReadSettings"
+											}
+										},
+										"sink": {
+											"type": "BinarySink",
+											"storeSettings": {
+												"type": "AzureBlobStorageWriteSettings"
+											}
+										},
+										"enableStaging": false
+									},
+									"inputs": [
+										{
+											"referenceName": "srcqcbinarydataset",
+											"type": "DatasetReference",
+											"parameters": {
+												"filename": "@item().Name"
+											}
+										}
+									],
+									"outputs": [
+										{
+											"referenceName": "targethosjsondatasetv2",
+											"type": "DatasetReference",
+											"parameters": {}
+										}
+									]
+								}
+							]
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {},
+					"cancelAfter": {}
+				},
+				"annotations": [],
+				"lastPublishTime": "2022-07-04T09:25:47Z"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/QCBlobCopyToHosBlobPipeline')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "qcblobmetadataactivity",
+						"type": "GetMetadata",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataset": {
+								"referenceName": "QcbinaryDataset",
+								"type": "DatasetReference",
+								"parameters": {}
+							},
+							"fieldList": [
+								"childItems"
+							],
+							"storeSettings": {
+								"type": "AzureBlobStorageReadSettings",
+								"recursive": true,
+								"enablePartitionDiscovery": false
+							},
+							"formatSettings": {
+								"type": "BinaryReadSettings"
+							}
+						}
+					},
+					{
+						"name": "qcmediafilter",
+						"type": "Filter",
+						"dependsOn": [
+							{
+								"activity": "qcblobmetadataactivity",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@activity('qcblobmetadataactivity').output.childItems",
+								"type": "Expression"
+							},
+							"condition": {
+								"value": "@not(endswith(item().name,'.json'))",
+								"type": "Expression"
+							}
+						}
+					},
+					{
+						"name": "qcmediaforeach",
+						"type": "ForEach",
+						"dependsOn": [
+							{
+								"activity": "qcmediafilter",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@activity('qcmediafilter').output.Value",
+								"type": "Expression"
+							},
+							"activities": [
+								{
+									"name": "qcmediacopytohos",
+									"type": "Copy",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "7.00:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "BinarySource",
+											"storeSettings": {
+												"type": "AzureBlobStorageReadSettings",
+												"recursive": true
+											},
+											"formatSettings": {
+												"type": "BinaryReadSettings"
+											}
+										},
+										"sink": {
+											"type": "BinarySink",
+											"storeSettings": {
+												"type": "AzureBlobStorageWriteSettings"
+											}
+										},
+										"enableStaging": false
+									},
+									"inputs": [
+										{
+											"referenceName": "qcmediadataset",
+											"type": "DatasetReference",
+											"parameters": {}
+										}
+									],
+									"outputs": [
+										{
+											"referenceName": "hosblobdataset",
+											"type": "DatasetReference",
+											"parameters": {}
+										}
+									]
+								}
+							]
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {},
+					"cancelAfter": {}
+				},
+				"annotations": [],
+				"lastPublishTime": "2022-07-04T09:25:47Z"
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/hosblobdataset')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/QcJsonDataflowToHosCosmoPipeline')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
 			"properties": {
@@ -496,13 +724,14 @@
 						"userProperties": [],
 						"typeProperties": {
 							"dataflow": {
-								"referenceName": "dataflow2",
+								"referenceName": "QcJsonBlobToHosCosmoDataflow",
 								"type": "DataFlowReference",
 								"parameters": {},
 								"datasetParameters": {
-									"source1": {},
-									"sink1": {}
-								}
+									"qcjsonstream": {},
+									"hoscosmostream": {}
+								},
+								"linkedServiceParameters": {}
 							},
 							"staging": {},
 							"compute": {
@@ -520,7 +749,7 @@
 				"annotations": []
 			},
 			"dependsOn": [
-				"[concat(variables('factoryId'), '/dataflows/dataflow2')]"
+				"[concat(variables('factoryId'), '/dataflows/QcJsonBlobToHosCosmoDataflow')]"
 			]
 		}
 	]
