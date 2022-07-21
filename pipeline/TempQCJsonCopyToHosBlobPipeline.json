@@ -50,7 +50,7 @@
 						"type": "Expression"
 					},
 					"condition": {
-						"value": "@endswith(item().name,'pdf')",
+						"value": "@endswith(item().name,'json')",
 						"type": "Expression"
 					}
 				}
