@@ -10,7 +10,7 @@
 		"typeProperties": {
 			"location": {
 				"type": "AzureBlobStorageLocation",
-				"fileName": "QC_json.json",
+				"fileName": "@dataset().filename",
 				"container": "targetblobcontainer"
 			}
 		},
