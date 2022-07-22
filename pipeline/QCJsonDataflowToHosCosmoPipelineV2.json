@@ -88,7 +88,12 @@
 							"typeProperties": {
 								"dataflow": {
 									"referenceName": "QcJsonBlobToHosCosmoDataflow",
-									"type": "DataFlowReference"
+									"type": "DataFlowReference",
+									"datasetParameters": {
+										"qcjsonstream": {
+											"filename": "@item().Name"
+										}
+									}
 								},
 								"compute": {
 									"coreCount": 8,

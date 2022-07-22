@@ -3,7 +3,7 @@
 	"properties": {
 		"activities": [
 			{
-				"name": "Data flow1",
+				"name": "qctohosdataflowv2",
 				"type": "ExecuteDataFlow",
 				"dependsOn": [],
 				"policy": {
@@ -17,7 +17,19 @@
 				"typeProperties": {
 					"dataflow": {
 						"referenceName": "QcJsonBlobToHosCosmoDataflow",
-						"type": "DataFlowReference"
+						"type": "DataFlowReference",
+						"datasetParameters": {
+							"qcjsonstream": {
+								"filename": "@{item().name}"
+							}
+						},
+						"linkedServiceParameters": {
+							"qcjsonstream": {
+								"schemaLinkedService": {
+									"filename": "@{item().name}"
+								}
+							}
+						}
 					},
 					"compute": {
 						"coreCount": 8,
